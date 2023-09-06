@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { formatError, handleChange, validateEmpty } from '../../utils'
-import service from '../../services'
+import services from '../../services'
+import store from '../../utils/store'
 
 const Login = () => {
   let email = '', password = ''
@@ -15,10 +16,11 @@ const Login = () => {
     email,
     password
   })
+  const [code, setCode] = useState('')
+  const handleChangeCode = e => setCode(e.target.value)
   
   const [error, setError] = useState(null)
   const [needCode, setNeedCode] = useState(false)
-
 
   const navigate = useNavigate()
   const navigetToRegister = () => {
@@ -26,28 +28,38 @@ const Login = () => {
   }
 
   const login = async (e) => {
-    e.preventDefault()
-    const validateErrorInstance = validateEmpty(formData)
-    if (validateErrorInstance !== null) {
-      setError(validateErrorInstance.message)
-      return 
-    }
-    const {email, password} = formData
-    const loginErrorInstance = await service.login(email, password)
-    if (loginErrorInstance instanceof Error === false) {
-      sessionStorage.setItem('token', loginErrorInstance.token)
+    e?.preventDefault()
+    try {
+      if (code !== '') {
+        await services.confirm(formData.email, code)
+      }
+      validateEmpty(formData)
+      const { email, password } = formData
+      const { AccessToken } = await services.login(email, password)
+      store.set('AccessToken', AccessToken, 86400 * 30)
+      // Todo: if accessToken expire, use refreshToken to request a new one.
       navigate('/upload')
-    }
-    if (loginErrorInstance.code === 'UserNotConfirmedException') {
-      setNeedCode(true)
-    } else {
-      setError(loginErrorInstance.message)
+    } catch (error) {
+      if (error.code === 'UserNotConfirmedException') {
+        setNeedCode(true)
+      }
+      setError(error.message)
     }
   }
 
   useEffect(() => {
-    if (email !== '' && password !== '') login()
-  })
+    (async () => {
+      if (email !== '' && password !== '') {
+        await login()
+      } else {
+        try {
+          await services.getUserEmail()
+          navigate('/upload')
+        } catch (error) {}
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [])
 
   return <section className="bg-gray-50 dark:bg-gray-900">
   <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
@@ -73,7 +85,7 @@ const Login = () => {
                   needCode &&
                   <div>
                       <label htmlFor="code" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm Code</label>
-                      <input type="text" name="code" placeholder={`$Please find code in ${email}`} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
+                      <input type="text" name="code" value={code} onChange={handleChangeCode} placeholder={`Please find the code in ${email}`} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
                   </div>
                   }
                   {error && <p className="font-light text-red-600">{formatError(error)}</p>}

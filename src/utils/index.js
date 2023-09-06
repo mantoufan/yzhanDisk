@@ -12,13 +12,12 @@ export function handleChange(event) {
   }))
 }
 
-export const validateEmpty = (formData) => {
+export const validateEmpty = formData => {
   const names = Object.keys(formData)
   const n = names.length
   for (let i = 0; i < n; i++) {
     if (formData[names[i]] === '') {
-      return new Error('FormatError', `${names[i]} is empty`)
+      throw new Error('FormatError', `${names[i]} is empty`)
     }
   }
-  return null
 }

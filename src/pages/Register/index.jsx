@@ -1,18 +1,14 @@
 import { useNavigate } from 'react-router-dom'
-import service from '../../services'
+import services from '../../services'
 import { useState } from 'react'
 import { formatError, handleChange, validateEmpty } from '../../utils'
 import { Error } from '../../common/type'
 
 const validate = formData => {
-  const validateErrorInstance = validateEmpty(formData)
-  if (validateErrorInstance !== null) {
-    return validateErrorInstance
-  }
+  validateEmpty(formData)
   if (formData.password !== formData['confirm password']) {
-    return new Error('FormatError', 'Passwords do not match')
+    throw new Error('FormatError', 'Passwords do not match')
   }
-  return null
 }
 
 const Register = () => {
@@ -26,20 +22,17 @@ const Register = () => {
 
   const register = async (e) => {
     e.preventDefault()
-    const validateErrorInstance = validate(formData)
-    if (validateErrorInstance !== null) {
-      setError(validateErrorInstance.message)
-      return 
-    }
-    const {email, password} = formData
-    const registerErrorInstance = await service.register(email, password)
-    if (registerErrorInstance === null) {
+    try {
+      validate(formData)
+      const {email, password} = formData
+      await services.register(email, password)
       navigateToLogin({
         replace: true,
         state: { email, password }
       })
+    } catch (error) {
+      setError(error.message)
     }
-    setError(registerErrorInstance.message)
   }
 
   const navigateToLogin = options => {
@@ -68,7 +61,7 @@ const Register = () => {
                  </div>
                  <div>
                      <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm password</label>
-                     <input type="confirm-password" name="confirm password" value={formData['confirm password']} onChange={handleChange.bind(setFormData)} placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
+                     <input type="password" name="confirm password" value={formData['confirm password']} onChange={handleChange.bind(setFormData)} placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
                  </div>
                  {error && <p className="font-light text-red-600">{formatError(error)}</p>}
                  <button type="submit" className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Create an account</button>
