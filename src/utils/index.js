@@ -4,6 +4,10 @@ export const formatError = error => {
   return error[0].toUpperCase() + error.slice(1)
 }
 
+export const formatFilePath = filePath => {
+  return process.env.REACT_APP_S3_API_URL + '/' + filePath
+}
+
 export function handleChange(event) {
   const { name, value } = event.target
   this(prevState => ({
@@ -20,4 +24,8 @@ export const validateEmpty = formData => {
       throw new Error('FormatError', `${names[i]} is empty`)
     }
   }
+}
+
+export const getInputFilePath = (inputFileName) => {
+  return process.env.REACT_APP_S3_BUCKET_NAME + '/' + inputFileName
 }

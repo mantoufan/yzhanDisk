@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
-import services from '../../services'
-import { formatError } from '../../utils'
+import { useEffect, useRef, useState, useMemo } from 'react'
+import userServices from '../../services/user'
+import fileServices from '../../services/file'
+import modelServices from '../../services/model'
+import { formatError, formatFilePath, formatTimeStamp, getInputFilePath } from '../../utils'
 import { useNavigate } from 'react-router-dom'
+import { ModelData } from '../../common/type'
+import { Table } from '../../components'
 
 const Upload = () => {
   const [error, setError] = useState(null)
@@ -9,28 +13,81 @@ const Upload = () => {
   const [email, setEmail] = useState(null)
   const logout = async () => {
     try {
-      await services.logout()
+      await userServices.logout()
       navigate('/')
     } catch (error) {
       setError(error.message)
     }
   }
 
+  const [models, setModels] = useState([])
   useEffect(() => {
     (async () => {
       try {
-        const _email = await services.getUserEmail()
+        const _email = await userServices.getUserEmail()
         setEmail(_email)
       } catch (error) {
         navigate('/')
-      }
+      } 
+      await update()
+      // setInterval(update, 3000)
     })()
-   })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  return <>
-      <span className="float-right">{error && <span className="font-light text-red-600">{formatError(error)}</span>}<span onClick={logout} className="font-medium ps-2 pe-2 text-primary-600 cursor-pointer hover:underline dark:text-primary-500">Log Out</span></span><label className="block mt-1 mb-1 ps-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Hi, <span className="text-pink-600">{email}</span> :)</label>
-      <div className="mb-1">
-        <input type="text" id="default-input" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Please input the file name" />
+  
+  const update = async () => {
+    try {
+      setModels(await modelServices.get())
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  const deleteById = async(id) => {
+    try {
+      await modelServices.deleteById(id)
+      setModels(models.filter(model => model.id !== id))
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  const [intputText, setInputText] = useState('')
+  const handleIntputTextChange = e => setInputText(e.target.value)
+
+  const fileRef = useRef(null)
+  const submit = async (e) => {
+    e.preventDefault()
+    try {
+      for (const file of fileRef.current.files) {
+        await fileServices.upload(file)
+        await modelServices.put(new ModelData({
+          input_text: intputText,
+          input_file_path: getInputFilePath(file.name),
+        }))  
+      }
+      await update()
+      setError(null)
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  const formatModels = useMemo(() => {
+    models.forEach(model => {
+      ['input_file_path', 'output_file_path']
+      .forEach(key => model[key] = <a href={formatFilePath(model[key])} target="_blank" className="text-cyan-600 hover:underline">{model[key]}</a>)
+    })
+    return models
+  }, [models])
+
+  return <form onSubmit={submit} className="flex-col items-center justify-center px-6 mx-auto md:h-screen lg:pt-5">
+      <div className="mb-1 w-full">
+        <span className="float-right">{error && <span className="font-light text-red-600">{formatError(error)}</span>}<span onClick={logout} className="font-medium ps-2 pe-2 text-primary-600 cursor-pointer hover:underline dark:text-primary-500">Log Out</span></span><label className="block mt-1 mb-1 ps-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Hi, <span className="text-pink-600">{email}</span> :)</label>
+      </div>
+      <div className="mb-1 w-full">
+        <input type="text" value={intputText} onChange={handleIntputTextChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Please input the file name" />
       </div>
       <div className="flex items-center justify-center w-full">
       <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
@@ -41,9 +98,11 @@ const Upload = () => {
               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
           </div>
-          <input id="dropzone-file" type="file" className="hidden" />
+          <input id="dropzone-file" type="file" ref={fileRef} className="hidden" />
       </label>
   </div> 
-  </>
+  <button type="submit" className="w-full mb-1 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Submit</button>
+  <Table models={formatModels} deleteById={deleteById}></Table>
+  </form>
 }
 export default Upload

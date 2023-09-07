@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import services from '../../services'
+import userServices from '../../services/user'
 import { useState } from 'react'
 import { formatError, handleChange, validateEmpty } from '../../utils'
 import { Error } from '../../common/type'
@@ -25,7 +25,7 @@ const Register = () => {
     try {
       validate(formData)
       const {email, password} = formData
-      await services.register(email, password)
+      await userServices.register(email, password)
       navigateToLogin({
         replace: true,
         state: { email, password }

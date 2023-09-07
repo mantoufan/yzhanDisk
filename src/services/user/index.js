@@ -1,8 +1,8 @@
 import { SignUpCommand, CognitoIdentityProviderClient, InitiateAuthCommand, AuthFlowType, RespondToAuthChallengeCommand, GetUserCommand, GlobalSignOutCommand, ConfirmSignUpCommand } from '@aws-sdk/client-cognito-identity-provider'
-import { createClientForDefaultRegion } from '../utils/aws-sdk.js'
-import { Error } from '../common/type'
+import { createClientForDefaultRegion } from '../../utils/aws-sdk.js'
+import { Error } from '../../common/type.js'
 import Srp from 'aws-cognito-srp-client'
-import store from '../utils/store.js'
+import store from '../../utils/store.js'
 
 const srp = new Srp(process.env.REACT_APP_USER_POOL_ID)
 const client = createClientForDefaultRegion(CognitoIdentityProviderClient)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { formatError, handleChange, validateEmpty } from '../../utils'
-import services from '../../services'
+import userServices from '../../services/user'
 import store from '../../utils/store'
 
 const Login = () => {
@@ -31,11 +31,11 @@ const Login = () => {
     e?.preventDefault()
     try {
       if (code !== '') {
-        await services.confirm(formData.email, code)
+        await userServices.confirm(formData.email, code)
       }
       validateEmpty(formData)
       const { email, password } = formData
-      const { AccessToken } = await services.login(email, password)
+      const { AccessToken } = await userServices.login(email, password)
       store.set('AccessToken', AccessToken, 86400 * 30)
       // Todo: if accessToken expire, use refreshToken to request a new one.
       navigate('/upload')
@@ -53,7 +53,7 @@ const Login = () => {
         await login()
       } else {
         try {
-          await services.getUserEmail()
+          await userServices.getUserEmail()
           navigate('/upload')
         } catch (error) {}
       }
