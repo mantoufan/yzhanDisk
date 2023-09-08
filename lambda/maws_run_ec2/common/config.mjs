@@ -1,0 +1,1 @@
+export const REGION = 'ap-southeast-2'

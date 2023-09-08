@@ -7,6 +7,10 @@ Start Date: 2023 - 09 - 06 19:00
 ```shell
 yarn install && yarn start
 ```
+## Back-end Code
+1. [Lambda](./lambda)  
+- [Lambda for responding to a DynamoDB trigger and controlling an EC2 instance](./lambda/maws_run_ec2)  
+2. [Shell scripts runs on EC2 Instance](./ec2.sh)  
 
 ## Feature List
 1. All Basic requirements, except that:  
