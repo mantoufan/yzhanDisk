@@ -51,7 +51,7 @@ curl -s -T "$output_file_name" "$upload_url"
 blue 'Step7: updating DB with output_file_path...'
 output_file_path="${REACT_APP_S3_BUCKET_NAME}/${output_file_name}"
 output_file_path_json="{\"output_file_path\":\"${output_file_path}\"}"
-curl -X PATCH -H 'Content-Type: application/json' -d "$output_file_path_json" "$dp_api_url"
+curl -X PATCH -H 'Content-Type: application/json' -d "$output_file_path_json" "$db_api_url" -o /dev/null 
 
 green "Done!"
 
