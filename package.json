@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node scripts/start.js",
-    "build": "node scripts/build.js",
+    "build": "export BUILD_PATH=docs && export PUBLIC_URL=/mAWS && node scripts/build.js",
     "test": "node scripts/test.js"
   },
   "dependencies": {
@@ -39,6 +39,7 @@
     "flowbite": "^1.8.1",
     "flowbite-react": "^0.5.0",
     "fs-extra": "^10.0.0",
+    "goeasy": "^2.8.3",
     "html-webpack-plugin": "^5.5.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.4.3",

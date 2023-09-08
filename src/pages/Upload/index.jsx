@@ -2,10 +2,12 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import userServices from '../../services/user'
 import fileServices from '../../services/file'
 import modelServices from '../../services/model'
-import { formatError, formatFilePath, formatTimeStamp, getInputFilePath } from '../../utils'
+import { formatError, formatFilePath, getInputFilePath, loading, validateEmpty } from '../../utils'
 import { useNavigate } from 'react-router-dom'
 import { ModelData } from '../../common/type'
-import { Table } from '../../components'
+import { Table, Log } from '../../components'
+import { useLogs } from '../../utils/hooks'
+import { getSocketInstance } from '../../utils/socket'
 
 const Upload = () => {
   const [error, setError] = useState(null)
@@ -14,9 +16,10 @@ const Upload = () => {
   const logout = async () => {
     try {
       await userServices.logout()
-      navigate('/')
     } catch (error) {
       setError(error.message)
+    } finally {
+      navigate('/')
     }
   }
 
@@ -35,7 +38,26 @@ const Upload = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  
+  const [, addLogs] = useLogs()
+
+  useEffect(() => {
+    if (email === null) return
+    const socket = getSocketInstance()
+    socket.pubsub.subscribe({
+      channel: email,
+      onMessage: async(message) => {
+        const { content, action } = JSON.parse(message.content)
+        addLogs(content, 'Socket')
+        if (action === 'updateTable') {
+          await update()
+        }
+      },
+      onSuccess: () => addLogs('Subscribe successfully', 'Socket'),
+      onFailed: error => addLogs('Subscribe failed, error code:' + error.code + ' error content:' + error.content, 'Socket')
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email])
+
   const update = async () => {
     try {
       setModels(await modelServices.get())
@@ -56,35 +78,48 @@ const Upload = () => {
   const [intputText, setInputText] = useState('')
   const handleIntputTextChange = e => setInputText(e.target.value)
 
-  const fileRef = useRef(null)
+  const fileRef = useRef(null), submitRef = useRef(null)
   const submit = async (e) => {
     e.preventDefault()
+    const stopLoading = loading(submitRef)
     try {
+      validateEmpty({
+        intputText, 
+        files: fileRef.current.files
+      })
       for (const file of fileRef.current.files) {
         await fileServices.upload(file)
+        addLogs(file.name + ' uploaded', 'Client')
         await modelServices.put(new ModelData({
           input_text: intputText,
           input_file_path: getInputFilePath(file.name),
+          email,
         }))  
+        addLogs(intputText + ' and ' + file.name + ' written to the database, waiting for EC2...(1 - 3 minutes as usual)', 'Client')
       }
       await update()
       setError(null)
     } catch (error) {
       setError(error.message)
+    } finally {
+      stopLoading()
     }
   }
 
   const formatModels = useMemo(() => {
-    models.forEach(model => {
-      ['input_file_path', 'output_file_path']
-      .forEach(key => model[key] = <a href={formatFilePath(model[key])} target="_blank" className="text-cyan-600 hover:underline">{model[key]}</a>)
-    })
+    for (let i = models.length; i--;) {
+      const model = models[i]
+      if (model.email !== email) models.splice(i, 1)
+      ;['input_file_path', 'output_file_path']
+      .forEach(key => model[key] = <a href={formatFilePath(model[key])} target="_blank" rel="noreferrer" className="text-cyan-600 hover:underline">{model[key]}</a>)
+    }
+    models.sort((a, b) => b.create_timestamp - a.create_timestamp)
     return models
-  }, [models])
+  }, [models, email])
 
-  return <form onSubmit={submit} className="flex-col items-center justify-center px-6 mx-auto md:h-screen lg:pt-5">
+  return <form onSubmit={submit} className="flex-col items-center justify-center px-6 mx-auto lg:pt-5">
       <div className="mb-1 w-full">
-        <span className="float-right">{error && <span className="font-light text-red-600">{formatError(error)}</span>}<span onClick={logout} className="font-medium ps-2 pe-2 text-primary-600 cursor-pointer hover:underline dark:text-primary-500">Log Out</span></span><label className="block mt-1 mb-1 ps-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Hi, <span className="text-pink-600">{email}</span> :)</label>
+        <span className="float-right"><span onClick={logout} className="font-medium ps-2 pe-2 text-primary-600 cursor-pointer hover:underline dark:text-primary-500">Log Out</span></span><label className="block mt-1 mb-1 ps-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Hi, <span className="text-pink-600">{email}</span> :)</label>
       </div>
       <div className="mb-1 w-full">
         <input type="text" value={intputText} onChange={handleIntputTextChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Please input the file name" />
@@ -101,7 +136,9 @@ const Upload = () => {
           <input id="dropzone-file" type="file" ref={fileRef} className="hidden" />
       </label>
   </div> 
-  <button type="submit" className="w-full mb-1 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Submit</button>
+  {error && <div className="font-light text-red-600">{formatError(error)}</div>}
+  <button type="submit" ref={submitRef} className="w-full mb-1 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Submit</button>
+  <Log />
   <Table models={formatModels} deleteById={deleteById}></Table>
   </form>
 }

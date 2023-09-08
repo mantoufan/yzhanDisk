@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { formatError, handleChange, validateEmpty } from '../../utils'
+import { formatError, handleChange, loading, validateEmpty } from '../../utils'
 import userServices from '../../services/user'
 import store from '../../utils/store'
 
@@ -27,8 +27,10 @@ const Login = () => {
     navigate('/register')
   }
 
+  const submitRef = useRef()
   const login = async (e) => {
     e?.preventDefault()
+    const stopLoading = loading(submitRef)
     try {
       if (code !== '') {
         await userServices.confirm(formData.email, code)
@@ -44,6 +46,8 @@ const Login = () => {
         setNeedCode(true)
       }
       setError(error.message)
+    } finally {
+      stopLoading()
     }
   }
 
@@ -75,21 +79,21 @@ const Login = () => {
               <form className="space-y-4 md:space-y-6" action="#" onSubmit={login}>
                   <div>
                       <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleChange.bind(setFormData)} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@company.com" required="" />
+                      <input type="email" name="email" id="email" value={formData.email} onChange={handleChange.bind(setFormData)} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@company.com" required="" />
                   </div>
                   <div>
                       <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                      <input type="password" name="password" value={formData.password} onChange={handleChange.bind(setFormData)} placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
+                      <input type="password" name="password" id="password" value={formData.password} onChange={handleChange.bind(setFormData)} placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
                   </div>
                   {
                   needCode &&
                   <div>
                       <label htmlFor="code" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm Code</label>
-                      <input type="text" name="code" value={code} onChange={handleChangeCode} placeholder={`Please find the code in ${email}`} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
+                      <input type="text" name="code" id="code" value={code} onChange={handleChangeCode} placeholder={`Please find the code in ${email}`} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required="" />
                   </div>
                   }
                   {error && <p className="font-light text-red-600">{formatError(error)}</p>}
-                  <button type="submit" className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Sign in</button>
+                  <button type="submit" ref={submitRef} className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">Sign in</button>
                   <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                       Don’t have an account yet? <span onClick={navigetToRegister} className="font-medium text-primary-600 cursor-pointer hover:underline dark:text-primary-500">Sign up</span>
                   </p>

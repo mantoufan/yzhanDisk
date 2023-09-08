@@ -1,8 +1,9 @@
 const Table = ({ models, deleteById }) => {
   if (models.length === 0) return null
   const ths = Object.keys(models[0])
+  ths.sort((a, b) => a.length - b.length)
 
-  return <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+  return <div className="overflow-auto"><table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
       <tr>
         {
@@ -36,6 +37,7 @@ const Table = ({ models, deleteById }) => {
     }
     </tbody>
   </table>
+  </div>
 }
 
 export default Table
