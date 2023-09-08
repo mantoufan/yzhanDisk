@@ -14,5 +14,5 @@ export const useLogs = () => {
     }
     setValue([...value])
   }
-  return [value, addLogs]
+  return [value || [], addLogs]
 }

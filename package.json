@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node scripts/start.js",
-    "build": "export BUILD_PATH=docs && export PUBLIC_URL=/mAWS && node scripts/build.js",
+    "build": "node scripts/build.js",
     "test": "node scripts/test.js"
   },
   "dependencies": {
