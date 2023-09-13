@@ -1,5 +1,6 @@
 # Multi User Cloud Disk
-Start Date: 2023 - 09 - 06 19:00
+A serveless rapid development practice all rely on AWS and Flowbite   
+Start Date: 2023-09-06 19:00 End At: 2023-09-08 21:00  
 ![Start Date proof](https://s2.loli.net/2023/09/08/92b1Cc4XiFeE8pM.png)
 
 ## Demo
@@ -13,12 +14,12 @@ yarn install && yarn start
 2. [Shell scripts runs on EC2 Instance](./ec2.sh)  
 
 ## Feature List
-1. All Basic requirements, except that:  
-- Authoration of all API Gateway, including S3
-2. All Bonus requirements
-3. Others
-- A Log based on socket
-4. All AWS products I used
+1. Building a user center using Cognitio  
+2. Upload txt file to S3 directly via API Gateway  
+3. Synchronize real-time Log base on Sokcet.IO, which is powered by goeasy.io
+4. Rmoete create and send commands to EC2, using it for proccessing S3 Objects
+5. CRUD all data to DynamoDB
+6. All AWS products I used in this repo
 ![Aws Product](https://s2.loli.net/2023/09/08/MrCTeptzv8YKEuR.png)
 
 ## Best Practice
@@ -32,7 +33,3 @@ Development users does not have permission to manage users
 5. Each application has a role and is granted the minimum permissions
 6. Scan dynamoDB is wasteful, so I use websocket to receive message from server, scan only when updated  
 I know abusing websocket is not a good idea ^_^
-
-## CV
-[Online CV and downloadable PDF](https://cv.os120.com)  
-Thank you for so nice chanllenge, I gain a lot 🙏
