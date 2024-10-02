@@ -12,7 +12,7 @@
     "test": "node scripts/test.js"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.405.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.662.0",
     "@babel/core": "^7.16.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@svgr/webpack": "^5.5.0",
